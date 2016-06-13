@@ -38,7 +38,7 @@ class RedisSessionHandler extends Nette\Object implements \SessionHandlerInterfa
 	/**
 	 * @var RedisClient
 	 */
-	private $client;
+	protected $client;
 
 	/**
 	 * @var Nette\Http\Session
@@ -226,7 +226,7 @@ class RedisSessionHandler extends Nette\Object implements \SessionHandlerInterfa
 	 *
 	 * @return string
 	 */
-	private function formatKey($id)
+	protected function formatKey($id)
 	{
 		return self::NS_NETTE . $id;
 	}

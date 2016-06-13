@@ -223,7 +223,7 @@ class RedisExtension extends Nette\DI\CompilerExtension
 
 		} else {
 			$builder->addDefinition($this->prefix('sessionHandler'))
-				->setClass('Kdyby\Redis\RedisSessionHandler', array($this->prefix('@sessionHandler_client')));
+				->setClass('Kdyby\Redis\RedisSessionHandlerOptimisticLocking', array($this->prefix('@sessionHandler_client')));
 
 			$sessionService = $builder->getByType('Nette\Http\Session') ?: 'session';
 			$builder->getDefinition($sessionService)
