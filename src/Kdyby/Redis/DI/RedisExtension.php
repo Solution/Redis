@@ -27,6 +27,9 @@ class RedisExtension extends Nette\DI\CompilerExtension
 	const DEFAULT_SESSION_PREFIX = Kdyby\Redis\RedisSessionHandler::NS_NETTE;
 	const PANEL_COUNT_MODE = 'count';
 
+	const LOCKING_OPTIMISTIC = 'optimistic';
+	const LOCKING_PESSIMISTIC = 'pessimistic';
+
 	/**
 	 * @var array
 	 */
@@ -52,6 +55,7 @@ class RedisExtension extends Nette\DI\CompilerExtension
 		'lockAcquireTimeout' => FALSE,
 		'debugger' => '%debugMode%',
 		'versionCheck' => TRUE,
+		'locking' => self::LOCKING_PESSIMISTIC,
 	);
 
 	/**
@@ -222,8 +226,14 @@ class RedisExtension extends Nette\DI\CompilerExtension
 			$this->loadNativeSessionHandler($sessionConfig);
 
 		} else {
-			$builder->addDefinition($this->prefix('sessionHandler'))
-				->setClass('Kdyby\Redis\RedisSessionHandlerOptimisticLocking', array($this->prefix('@sessionHandler_client')));
+			if ($sessionConfig['locking'] === self::LOCKING_OPTIMISTIC) {
+				$builder->addDefinition($this->prefix('sessionHandler'))
+					->setClass('Kdyby\Redis\RedisSessionHandlerOptimisticLocking', array($this->prefix('@sessionHandler_client')));
+
+			} else {
+				$builder->addDefinition($this->prefix('sessionHandler'))
+					->setClass('Kdyby\Redis\RedisSessionHandler', array($this->prefix('@sessionHandler_client')));
+			}
 
 			$sessionService = $builder->getByType('Nette\Http\Session') ?: 'session';
 			$builder->getDefinition($sessionService)
