@@ -75,6 +75,16 @@ class RedisSessionHandlerOptimisticLocking extends RedisSessionHandler
 
 
 
+	/**
+	 * Try write to session recursively with 10 attempts
+	 *
+	 * @param $id
+	 * @param $data
+	 * @param int $attempts
+	 * @return bool
+	 * @throws \Exception
+	 * @throws \Throwable
+	 */
 	private function tryWrite($id, $data, $attempts = 10)
 	{
 		if ($attempts <= 0) {
@@ -103,25 +113,29 @@ class RedisSessionHandlerOptimisticLocking extends RedisSessionHandler
 
 
 
+	/**
+	 * Merging sessions data
+	 *
+	 * @param $currentData
+	 * @param $newData
+	 * @return string
+	 */
 	private function mergeData($currentData, $newData)
 	{
-		$unserializedCurrentData = unserialize($currentData);
-		$unserializedNewData = unserialize($newData);
+		if (is_array($currentData) && is_array($newData)) {
+			$mergedData = array_merge($currentData, $newData);
 
-		if (is_array($unserializedCurrentData) && is_array($unserializedNewData)) {
-			$mergedData = serialize(array_merge($unserializedCurrentData, $unserializedNewData));
+		} elseif (is_object($currentData) && is_object($newData)) {
+			$mergedData = (object) array_merge((array) $currentData, (array) $newData);
 
-		} elseif (is_object($unserializedCurrentData) && is_object($unserializedNewData)) {
-			$mergedData = serialize((object) array_merge((array) $unserializedCurrentData, (array) $unserializedNewData));
+		} elseif (is_numeric($currentData) && is_numeric($newData)) {
+			$mergedData = $newData > $currentData ? $newData : $currentData;
 
-		} elseif (is_numeric($unserializedCurrentData) && is_numeric($unserializedNewData)) {
-			$mergedData = serialize($unserializedNewData > $unserializedCurrentData ? $unserializedNewData : $unserializedCurrentData);
-
-		} elseif ($unserializedCurrentData instanceof \DateTime && $unserializedNewData instanceof \DateTime) {
-			$mergedData = serialize($unserializedNewData > $unserializedCurrentData ? $unserializedNewData : $unserializedCurrentData);
+		} elseif ($currentData instanceof \DateTime && $newData instanceof \DateTime) {
+			$mergedData = $newData > $currentData ? $newData : $currentData;
 
 		} else {
-			$mergedData = $unserializedNewData;
+			$mergedData = $newData;
 		}
 
 		return $mergedData;
